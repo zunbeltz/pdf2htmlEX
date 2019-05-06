@@ -56,7 +56,7 @@ void HTMLRenderer::eoFill(GfxState * state)
     tracer.fill(state, true);
 }
 
-GBool HTMLRenderer::axialShadedFill(GfxState *state, GfxAxialShading *shading, double tMin, double tMax)
+bool HTMLRenderer::axialShadedFill(GfxState *state, GfxAxialShading *shading, double tMin, double tMax)
 {
     tracer.fill(state); //TODO correct?
     return true;
@@ -64,8 +64,8 @@ GBool HTMLRenderer::axialShadedFill(GfxState *state, GfxAxialShading *shading, d
 
 void HTMLRenderer::beginTransparencyGroup(GfxState *state, double *bbox,
                                       GfxColorSpace *blendingColorSpace,
-                                      GBool isolated, GBool knockout,
-                                      GBool forSoftMask) {
+                                      bool isolated, bool knockout,
+                                      bool forSoftMask) {
 	inTransparencyGroup++;
 }
 void HTMLRenderer::endTransparencyGroup(GfxState *state) {

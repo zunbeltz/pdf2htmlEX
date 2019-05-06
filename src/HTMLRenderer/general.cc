@@ -53,7 +53,7 @@ HTMLRenderer::HTMLRenderer(Param & param)
     if(!(param.debug))
     {
         //disable error messages of poppler
-        globalParams->setErrQuiet(gTrue);
+        globalParams->setErrQuiet(true);
     }
 
     ffw_init(param.debug);

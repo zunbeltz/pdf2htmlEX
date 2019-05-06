@@ -169,7 +169,7 @@ string HTMLRenderer::dump_embedded_font (GfxFont * font, FontInfo & info)
 
         char buf[1024];
         int len;
-        while((len = obj.streamGetChars(1024, (Guchar*)buf)) > 0)
+        while((len = obj.streamGetChars(1024, (unsigned char*)buf)) > 0)
         {
             outf.write(buf, len);
         }
@@ -205,8 +205,8 @@ string HTMLRenderer::dump_type3_font (GfxFont * font, FontInfo & info)
     auto used_map = preprocessor.get_code_map(hash_ref(font->getID()));
 
     //calculate transformed metrics
-    double * font_bbox = font->getFontBBox();
-    double * font_matrix = font->getFontMatrix();
+    const double * font_bbox = font->getFontBBox();
+    const double * font_matrix = font->getFontMatrix();
     double transformed_bbox[4];
     memcpy(transformed_bbox, font_bbox, 4 * sizeof(double));
     /*
@@ -337,7 +337,7 @@ string HTMLRenderer::dump_type3_font (GfxFont * font, FontInfo & info)
                     &box, nullptr);
             output_dev->startDoc(cur_doc, &font_engine);
             output_dev->startPage(1, gfx->getState(), gfx->getXRef());
-            output_dev->setInType3Char(gTrue);
+            output_dev->setInType3Char(true);
             auto char_procs = ((Gfx8BitFont*)font)->getCharProcs();
             Object char_proc_obj;
             auto glyph_index = cur_font->getGlyph(code, nullptr, 0);
@@ -634,7 +634,9 @@ void HTMLRenderer::embed_font(const string & filepath, GfxFont * font, FontInfo 
             Unicode u, *pu=&u;
             if(info.use_tounicode)
             {
-                int n = ctu ? (ctu->mapToUnicode(cur_code, &pu)) : 0;
+                int n = ctu ?
+                  (((CharCodeToUnicode *)ctu)->mapToUnicode(cur_code, &pu)) :
+                  0;
                 u = check_unicode(pu, n, cur_code, font);
             }
             else
@@ -756,7 +758,7 @@ void HTMLRenderer::embed_font(const string & filepath, GfxFont * font, FontInfo 
         }
 
         if(ctu)
-            ctu->decRefCnt();
+            ((CharCodeToUnicode *)ctu)->decRefCnt();
     }
 
     /*
@@ -870,7 +872,7 @@ const FontInfo * HTMLRenderer::install_font(GfxFont * font)
     {
         cerr << "Install font " << hex << new_fn_id << dec
             << ": (" << (font->getID()->num) << ' ' << (font->getID()->gen) << ") " 
-            << (font->getName() ? font->getName()->getCString() : "")
+            << (font->getName() ? font->getName()->toStr() : "")
             << endl;
     }
 
@@ -900,7 +902,7 @@ const FontInfo * HTMLRenderer::install_font(GfxFont * font)
     /*
      * The 2nd parameter of locateFont should be true only for PS
      * which does not make much sense in our case
-     * If we specify gFalse here, font_loc->locType cannot be gfxFontLocResident
+     * If we specify false here, font_loc->locType cannot be gfxFontLocResident
      */
     if(auto * font_loc = font->locateFont(xref, nullptr))
     {
@@ -947,7 +949,7 @@ void HTMLRenderer::install_embedded_font(GfxFont * font, FontInfo & info)
 
 void HTMLRenderer::install_external_font(GfxFont * font, FontInfo & info)
 {
-    string fontname(font->getName()->getCString());
+    string fontname(font->getName()->toStr());
 
     // resolve bad encodings in GB
     auto iter = GB_ENCODED_FONT_NAME_MAP.find(fontname); 
@@ -963,7 +965,7 @@ void HTMLRenderer::install_external_font(GfxFont * font, FontInfo & info)
     {
         if(localfontloc != nullptr)
         {
-            embed_font(string(localfontloc->path->getCString()), font, info);
+            embed_font(string(localfontloc->path->toStr()), font, info);
             export_remote_font(info, param.font_format, font);
             delete localfontloc;
             return;
@@ -979,7 +981,7 @@ void HTMLRenderer::install_external_font(GfxFont * font, FontInfo & info)
     if(localfontloc != nullptr)
     {
         // fill in ascent/descent only, do not embed
-        embed_font(string(localfontloc->path->getCString()), font, info, true);
+        embed_font(string(localfontloc->path->toStr()), font, info, true);
         delete localfontloc;
     }
     else
